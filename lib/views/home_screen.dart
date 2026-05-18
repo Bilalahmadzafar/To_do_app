@@ -1,10 +1,11 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:to_do_list/views/widgets/add_task_dialog.dart';
 import '../view_models/todo_view_model.dart';
+import '../widgets/todo_item.dart';
 import 'calendar_screen.dart';
-import 'widgets/add_task_dialog.dart';
-import 'widgets/todo_title.dart';
 import '../models/todo_model.dart';
 import '../services/speech_service.dart';
 
@@ -56,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _stopListeningAndAddTodo() async {
-    // Capture context-dependent objects before awaiting
     final vm = Provider.of<TodoViewModel>(context, listen: false);
     final messenger = ScaffoldMessenger.of(context);
 
@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _isListening = false;
     });
 
-    final recognized = _speechService.voiceInput.trim();
+    final recognized = _speechService.voiceInput.trim(); // fixed variable name
     if (recognized.isNotEmpty) {
       vm.addTodo(recognized);
       messenger.showSnackBar(
@@ -96,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final todos = viewModel.todos;
 
     // Group by createdAt date.
-    // Assumes TodoModel.createdAt is non-nullable (DateTime).
     final Map<String, List<TodoModel>> grouped = {};
     for (final todo in todos) {
       final key = DateFormat('yyyy-MM-dd').format(todo.createdAt);
@@ -104,8 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text("My To-Do List"),
         centerTitle: true,
@@ -137,6 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: sortedKeys.length,
               itemBuilder: (context, index) {
                 final key = sortedKeys[index];
@@ -148,36 +150,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Text(
                         formatted,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                     ),
-                    ...items.map((todo) => Dismissible(
-                          key: ValueKey(todo.id),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (_) {
-                            viewModel.deleteTodo(todo.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("${todo.title} deleted"),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          background: Container(
-                            color: Colors.red[700],
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: const Icon(Icons.delete_forever,
-                                color: Colors.white),
-                          ),
-                          child: TodoTitle(todo: todo),
-                        )),
+                    ...items.map((todo) {
+                      // set card color here — change to any color you prefer
+                      final Color cardColor = todo.isDone
+                          ? Colors.blue.shade50 // completed tasks (light blue)
+                          : Colors.yellow.shade50; // active tasks (soft blue)
+
+                      return Dismissible(
+                        key: ValueKey(todo.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) {
+                          viewModel.deleteTodo(todo.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("${todo.title} deleted"),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        background: Container(
+                          color: Colors.red[700],
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete_forever,
+                              color: Colors.white),
+                        ),
+                        child: TodoTitle(
+                          todo: todo,
+                          onToggle: (id) => viewModel.toggleTodo(id),
+                          onDelete: (id) => viewModel.deleteTodo(id),
+                          onUpdateTitle: (id, newTitle) =>
+                              viewModel.updateTodoTitle(id, newTitle),
+                          cardColor: cardColor, // blue card color applied
+                        ),
+                      );
+                    }).toList(),
                   ],
                 );
               },

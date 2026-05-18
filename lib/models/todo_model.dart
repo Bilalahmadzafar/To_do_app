@@ -1,3 +1,4 @@
+// lib/models/todo_model.dart
 import 'package:hive/hive.dart';
 
 part 'todo_model.g.dart';
@@ -8,7 +9,7 @@ class TodoModel extends HiveObject {
   final String id;
 
   @HiveField(1)
-  final String title;
+  String title;
 
   @HiveField(2)
   bool isDone;
@@ -17,7 +18,7 @@ class TodoModel extends HiveObject {
   DateTime? completedAt;
 
   @HiveField(4)
-  DateTime createdAt;
+  final DateTime createdAt;
 
   TodoModel({
     required this.id,

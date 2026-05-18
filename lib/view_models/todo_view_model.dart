@@ -1,7 +1,7 @@
+// lib/view_models/todo_view_model.dart
 import 'package:flutter/foundation.dart';
 import '../models/todo_model.dart';
 import '../repositories/todo_repository.dart';
-import 'package:hive/hive.dart';
 
 class TodoViewModel extends ChangeNotifier {
   final TodoRepository _todoRepository;
@@ -24,6 +24,13 @@ class TodoViewModel extends ChangeNotifier {
 
   void deleteTodo(String id) {
     _todoRepository.deleteTodo(id);
+    notifyListeners();
+  }
+
+  /// Update the title of an existing todo
+  void updateTodoTitle(String id, String newTitle) {
+    if (newTitle.trim().isEmpty) return;
+    _todoRepository.updateTodoTitle(id, newTitle.trim());
     notifyListeners();
   }
 }

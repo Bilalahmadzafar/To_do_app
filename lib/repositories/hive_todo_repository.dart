@@ -1,3 +1,4 @@
+// lib/repositories/hive_todo_repository.dart
 import 'package:hive/hive.dart';
 import '../models/todo_model.dart';
 import 'todo_repository.dart';
@@ -61,5 +62,15 @@ class HiveTodoRepository implements TodoRepository {
   @override
   void deleteTodo(String id) {
     _box.delete(id);
+  }
+
+  /// Update the title of an existing todo
+  @override
+  void updateTodoTitle(String id, String newTitle) {
+    final todo = _box.get(id);
+    if (todo != null) {
+      todo.title = newTitle;
+      todo.save();
+    }
   }
 }

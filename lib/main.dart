@@ -1,24 +1,26 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:to_do_list/views/splash_screen.dart';
 import 'models/todo_model.dart';
 import 'repositories/hive_todo_repository.dart';
 import 'repositories/todo_repository.dart';
 import 'view_models/todo_view_model.dart';
 import 'views/home_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
+  // Initialize Hive and register adapters
   await Hive.initFlutter();
-
-  // Register the Hive adapter
   Hive.registerAdapter(TodoModelAdapter());
 
-  // Open the box to store todos
-  await Hive.openBox<TodoModel>('todos');
+  // Open the todos box (log errors but allow app to start in debug)
+  try {
+    await Hive.openBox<TodoModel>('todos');
+  } catch (e, st) {
+    debugPrint('Failed to open Hive box "todos": $e\n$st');
+  }
 
   runApp(const TodoApp());
 }
@@ -30,14 +32,23 @@ class TodoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Use Hive-based repository
+        // Provide the repository as a singleton for the app lifetime.
         Provider<TodoRepository>(
           create: (_) => HiveTodoRepository(),
+          // Do not call dispose here unless the repository exposes a cleanup method.
+          // If HiveTodoRepository implements a close/dispose method, use the line below:
+          // dispose: (_, repo) => repo.close(), // <-- only if `close()` exists
         ),
-        // ViewModel depends on the repository
-        ChangeNotifierProxyProvider<TodoRepository, TodoViewModel>(
-          create: (context) => TodoViewModel(context.read<TodoRepository>()),
-            update: (context, repo, viewModel) => viewModel!,
+
+        // Provide the ViewModel that depends on the repository.
+        ChangeNotifierProvider<TodoViewModel>(
+          create: (context) {
+            final repo = context.read<TodoRepository>();
+            final vm = TodoViewModel(repo);
+            // If your ViewModel needs to load data on creation, call it here:
+            // vm.loadTodos();
+            return vm;
+          },
         ),
       ],
       child: MaterialApp(
