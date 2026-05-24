@@ -22,13 +22,15 @@ class TodoModelAdapter extends TypeAdapter<TodoModel> {
       isDone: fields[2] as bool,
       completedAt: fields[3] as DateTime?,
       createdAt: fields[4] as DateTime?,
+      dueDate: fields[5] as DateTime?,
+      isdate_set: fields[6] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TodoModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +40,11 @@ class TodoModelAdapter extends TypeAdapter<TodoModel> {
       ..writeByte(3)
       ..write(obj.completedAt)
       ..writeByte(4)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(5)
+      ..write(obj.dueDate)
+      ..writeByte(6)
+      ..write(obj.isdate_set);
   }
 
   @override
@@ -47,7 +53,7 @@ class TodoModelAdapter extends TypeAdapter<TodoModel> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TodoModelAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
+          other is TodoModelAdapter &&
+              runtimeType == other.runtimeType &&
+              typeId == other.typeId;
 }

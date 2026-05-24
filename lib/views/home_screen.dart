@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:to_do_list/views/widgets/add_task_dialog.dart';
+import '../screens/notification_test_screen.dart';
 import '../view_models/todo_view_model.dart';
 import '../widgets/todo_item.dart';
 import 'calendar_screen.dart';
@@ -67,9 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _isListening = false;
     });
 
-    final recognized = _speechService.voiceInput.trim(); // fixed variable name
+    final recognized = _speechService.voiceInput.trim();
     if (recognized.isNotEmpty) {
-      vm.addTodo(recognized);
+      await vm.addTodo(recognized);
       messenger.showSnackBar(
         SnackBar(content: Text('Added: $recognized')),
       );
@@ -122,6 +123,17 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          // 🆕 Add notification test button
+          IconButton(
+            icon: const Icon(Icons.notifications_active),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const NotificationTestScreen()),
+              );
+            },
+          ),
         ],
       ),
       body: Column(
@@ -162,16 +174,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     ...items.map((todo) {
-                      // set card color here — change to any color you prefer
                       final Color cardColor = todo.isDone
-                          ? Colors.blue.shade50 // completed tasks (light blue)
-                          : Colors.yellow.shade50; // active tasks (soft blue)
+                          ? Colors.blue.shade50
+                          : Colors.yellow.shade50;
 
                       return Dismissible(
                         key: ValueKey(todo.id),
                         direction: DismissDirection.endToStart,
-                        onDismissed: (_) {
-                          viewModel.deleteTodo(todo.id);
+                        onDismissed: (_) async {
+                          await viewModel.deleteTodo(todo.id);
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text("${todo.title} deleted"),
@@ -188,11 +200,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: TodoTitle(
                           todo: todo,
-                          onToggle: (id) => viewModel.toggleTodo(id),
-                          onDelete: (id) => viewModel.deleteTodo(id),
-                          onUpdateTitle: (id, newTitle) =>
-                              viewModel.updateTodoTitle(id, newTitle),
-                          cardColor: cardColor, // blue card color applied
+                          cardColor: cardColor,
+                          onToggle: (String value) {},
+                          onDelete: (String value) {},
+                          onUpdateTitle: (String id, String newTitle) {},
                         ),
                       );
                     }).toList(),

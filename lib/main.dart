@@ -7,6 +7,7 @@ import 'repositories/hive_todo_repository.dart';
 import 'repositories/todo_repository.dart';
 import 'view_models/todo_view_model.dart';
 import 'views/home_screen.dart';
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,10 @@ Future<void> main() async {
     debugPrint('Failed to open Hive box "todos": $e\n$st');
   }
 
+  // 🆕 Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
   runApp(const TodoApp());
 }
 
@@ -32,22 +37,13 @@ class TodoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Provide the repository as a singleton for the app lifetime.
         Provider<TodoRepository>(
           create: (_) => HiveTodoRepository(),
-          // Do not call dispose here unless the repository exposes a cleanup method.
-          // If HiveTodoRepository implements a close/dispose method, use the line below:
-          // dispose: (_, repo) => repo.close(), // <-- only if `close()` exists
         ),
-
-        // Provide the ViewModel that depends on the repository.
         ChangeNotifierProvider<TodoViewModel>(
           create: (context) {
             final repo = context.read<TodoRepository>();
-            final vm = TodoViewModel(repo);
-            // If your ViewModel needs to load data on creation, call it here:
-            // vm.loadTodos();
-            return vm;
+            return TodoViewModel(repo);
           },
         ),
       ],
